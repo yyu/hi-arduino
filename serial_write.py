@@ -13,8 +13,8 @@ teststring = [
 ser = serial.Serial('/dev/tty.usbserial-A925D7BZ', 9600)
 
 for s in teststring:
+    time.sleep(3)
     print s
     ser.write(s)
-    time.sleep(3)
 
 ser.close()

@@ -22,6 +22,10 @@
 // initialize the library with the numbers of the interface pins
 LiquidCrystal lcd(12, 11, 5, 4, 3, 2);
 
+const int buttonPin = 7;     // the number of the pushbutton pin
+const int ledPin =  13;      // the number of the LED pin
+
+int buttonState = 0;         // variable for reading the pushbutton status
 int ln = 0;
 
 void setup() {
@@ -29,11 +33,38 @@ void setup() {
 
   // set up the LCD's number of columns and rows: 
   lcd.begin(16, 2);
+
+  // initialize the LED pin as an output:
+  pinMode(ledPin, OUTPUT);
+  // initialize the pushbutton pin as an input:
+  pinMode(buttonPin, INPUT);
 }
 
 void loop() {
+  // read the state of the pushbutton value:
+  buttonState = digitalRead(buttonPin);
+
+  // check if the pushbutton is pressed.
+  // if it is, the buttonState is HIGH:
+  if (buttonState == HIGH) {    
+    // turn LED on:    
+    digitalWrite(ledPin, HIGH);
+    disp("");
+    disp("");
+    lcd.setCursor(0,0);
+  }
+  else {
+    // turn LED off:
+    digitalWrite(ledPin, LOW);
+  }
+  
   if (Serial.available()) {
     String s = Serial.readStringUntil('\n');
+    disp(s);
+  }
+}
+
+void disp(String s) {
     s = fit16(s);
 
     ln = 1 - ln;
@@ -44,7 +75,6 @@ void loop() {
     lcd.print(s);
     Serial.println("lcd:");
     Serial.println(s);
-  }
 }
 
 String fit16(String s) {
