@@ -1,5 +1,5 @@
-#define ledPin 3
-#define btnPin 7
+#define ledPin 3  // D3 -- LED -- resister -- GND
+#define btnPin 7  // D7 -- BUTTON -- GND (use builtin pullup)
 
 int speedOptions[] = {1000, 500, 250, 100};
 int speedOptionNumber = 4;
