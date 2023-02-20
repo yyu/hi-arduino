@@ -9,7 +9,6 @@ unsigned long timer = 0;
 unsigned long ledTimer = 0;
 
 bool btnWasOn = false;
-unsigned long btnReleaseTime;    // last time button is seen released
 unsigned long btnTurnedOnTime;   // timestamp for state change OFF->ON (debounced)
 unsigned long btnTurnedOffTime;  // timestamp for state change ON->OFF
 unsigned long speedChangeTime;
@@ -35,10 +34,6 @@ bool tooFast(unsigned long timer) {
   return timer < speedChangeTime + 1000;
 }
 
-bool btnHolding() {
-  return timer - btnReleaseTime > 500;
-}
-
 void changeSpeed() {
   speedOptionIndex = (speedOptionIndex + 1) % speedOptionNumber;
 }
@@ -48,12 +43,10 @@ void debugPrint(char* s) {
     Serial.print(" ");
     Serial.print("speed:"); Serial.print(speedOptions[speedOptionIndex]);
     Serial.print(", timer:"); Serial.print(timer);
-    Serial.print(", btnReleaseTime:"); Serial.print(btnReleaseTime);
     Serial.print(", btnTurnedOffTime:"); Serial.print(btnTurnedOffTime);
     Serial.print(", btnTurnedOnTime:"); Serial.print(btnTurnedOnTime);
     Serial.print(", btnTriggered:"); Serial.print(btnTriggered(timer));
     Serial.print(", tooFast:"); Serial.print(tooFast(timer));
-    Serial.print(", btnHolding:"); Serial.print(btnHolding());
     Serial.print(", speedChangeTime:"); Serial.print(speedChangeTime);
     Serial.println(".");
 }
@@ -65,20 +58,53 @@ void loop() {
   bool btnPressed = !digitalRead(btnPin);
   if (btnPressed) {
     if (!btnWasOn) {
-      if (timer - btnTurnedOffTime > 100) {
+      // the debounce logic will ignore:
+      //                              |<-----100----->|
+      //      on  -----------------------+ +------------------- on
+      //                                 | |
+      //      off                        +-+                    off
+      //
+      //      on  -----------------------+ +-+ +-+ +----------- on
+      //                                 | | | | | |
+      //      off                        +-+ +-+ +-+            off
+      //
+      //      on  -----------------------+ +-+ +-+              off
+      //                                 | | | | |
+      //      off                        +-+ +-+ +------------- on
+      //
+      //      on  -----------------------+ +-+ +-+              on
+      //                                 | | | | |
+      //      off                        +-+ +-+ +------------- off
+      //
+      // will trigger only once, even if it bounces:
+      //      on                         +-+                    on
+      //                                 | |
+      //      off -----------------------+ +------------------- off
+      //
+      //      on                         +-+ +-+ +-+            on
+      //                                 | | | | | |
+      //      off -----------------------+ +-+ +-+ +----------- off
+      //
+      //      on                         +--------------------- on
+      //                                 |
+      //      off -----------------------+                      off
+      //
+      //      on                         +-+ +-+ +------------- on
+      //                                 | | | | |
+      //      off -----------------------+ +-+ +-+              off
+      if (timer - btnTurnedOffTime > 100) {  // debounce
         btnTurnedOnTime = timer;
       }
     }
     btnWasOn = true;
   } else {
     if (btnWasOn) {
-      btnTurnedOffTime = timer;
+      btnTurnedOffTime = timer;  // always recognize ON->OFF events
     }
     btnWasOn = false;
-    btnReleaseTime = timer;
   }
 
-  if (btnTriggered(timer) && !tooFast(timer) && !btnHolding()) {
+  if (btnTriggered(timer) && !tooFast(timer)) {
     debugPrint("*");
     changeSpeed();
     speedChangeTime = timer;
