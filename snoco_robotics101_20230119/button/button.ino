@@ -8,19 +8,11 @@ int speedOptionIndex = 0;
 unsigned long timer = 0;
 unsigned long ledTimer = 0;
 
-//unsigned long btnReadTime = 0;
-// unsigned long btnPressTime;
-unsigned long btnReleaseTime;
-// unsigned long btnOnTime;
-// unsigned long btnOffTime;
-unsigned long speedChangeTime;
-
 bool btnWasOn = false;
-// bool btnChanged = false;
-unsigned long btnTurnedOnTime;
-unsigned long btnTurnedOffTime;
-//bool btnPressed = false;
-//bool btnReleased = true;
+unsigned long btnReleaseTime;    // last time button is seen released
+unsigned long btnTurnedOnTime;   // timestamp for state change OFF->ON (debounced)
+unsigned long btnTurnedOffTime;  // timestamp for state change ON->OFF
+unsigned long speedChangeTime;
 
 // the setup function runs once when you press reset or power the board
 void setup() {
@@ -37,7 +29,6 @@ void blink() {
 
 bool btnTriggered(unsigned long timer) {
   return timer - btnTurnedOnTime < 500;
-//  return btnPressTime > btnReleaseTime - 500;
 }
 
 bool tooFast(unsigned long timer) {
@@ -53,7 +44,6 @@ void changeSpeed() {
 }
 
 void debugPrint(char* s) {
-    // Serial.println(speedOptions[speedOptionIndex]);
     Serial.print(s);
     Serial.print(" ");
     Serial.print("speed:"); Serial.print(speedOptions[speedOptionIndex]);
@@ -80,18 +70,12 @@ void loop() {
       }
     }
     btnWasOn = true;
-    // btnPressTime = timer;
-    // btnOffTime = timer - btnReleaseTime;
   } else {
     if (btnWasOn) {
       btnTurnedOffTime = timer;
-      // if (timer - btnTurnedOffTime > 100) {
-      //   btnTurnedOffTime = timer;
-      // }
     }
     btnWasOn = false;
     btnReleaseTime = timer;
-    // btnOnTime = timer - btnPressTime;
   }
 
   if (btnTriggered(timer) && !tooFast(timer) && !btnHolding()) {
