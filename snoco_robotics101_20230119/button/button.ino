@@ -1,7 +1,7 @@
 #define ledPin 3
 #define btnPin 7
 
-int speedOptions[] = {1000, 800, 700, 500};
+int speedOptions[] = {1000, 500, 250, 100};
 int speedOptionNumber = 4;
 int speedOptionIndex = 0;
 
